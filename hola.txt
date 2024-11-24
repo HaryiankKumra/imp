@@ -1,0 +1,568 @@
+//round robin and priority 
+
+
+#include <stdio.h>
+#include <stdbool.h> // For Round Robin
+
+int main() {
+    int n, choice, quantum, time = 0;
+    printf("Enter the number of processes: ");
+    scanf("%d", &n);
+
+    int bt[n], at[n], wt[n], tat[n], p[n], remaining_bt[n];
+    int completed = 0, shortest = 0, finish_time, minm;
+    bool check = false;
+
+    // Taking inputs
+    printf("Enter Arrival Time and Burst Time for each process:\n");
+    for (int i = 0; i < n; i++) {
+        printf("Process %d - Arrival Time: ", i + 1);
+        scanf("%d", &at[i]);
+        printf("Burst Time: ");
+        scanf("%d", &bt[i]);
+        remaining_bt[i] = bt[i];
+        p[i] = i + 1; // Process ID
+    }
+
+    printf("Choose Scheduling Algorithm:\n");
+    printf("1. Priority Scheduling (Non-Preemptive)\n");
+    printf("2. Priority Scheduling (Preemptive)\n");
+    printf("3. Round Robin\n");
+    scanf("%d", &choice);
+
+    if (choice == 1 || choice == 2) {
+        int priority[n];
+        printf("Enter priorities for each process (lower number = higher priority):\n");
+        for (int i = 0; i < n; i++) {
+            printf("Process %d: ", i + 1);
+            scanf("%d", &priority[i]);
+        }
+
+        if (choice == 1) {
+            // Priority Scheduling (Non-Preemptive)
+            for (int i = 0; i < n - 1; i++) {
+                for (int j = i + 1; j < n; j++) {
+                    if (priority[i] > priority[j]) {
+                        int temp = priority[i];
+                        priority[i] = priority[j];
+                        priority[j] = temp;
+
+                        temp = at[i];
+                        at[i] = at[j];
+                        at[j] = temp;
+
+                        temp = bt[i];
+                        bt[i] = bt[j];
+                        bt[j] = temp;
+
+                        temp = p[i];
+                        p[i] = p[j];
+                        p[j] = temp;
+                    }
+                }
+            }
+
+            time = 0;
+            for (int i = 0; i < n; i++) {
+                if (time < at[i])
+                    time = at[i];
+                wt[i] = time - at[i];
+                time += bt[i];
+                tat[i] = wt[i] + bt[i];
+            }
+        } else if (choice == 2) {
+            // Priority Scheduling (Preemptive)
+            int executed[n];
+            for (int i = 0; i < n; i++)
+                executed[i] = 0;
+
+            time = 0;
+            while (completed != n) {
+                int highest_priority = -1;
+                for (int i = 0; i < n; i++) {
+                    if (at[i] <= time && !executed[i] && (highest_priority == -1 || priority[i] < priority[highest_priority])) {
+                        highest_priority = i;
+                    }
+                }
+
+                if (highest_priority != -1) {
+                    time += bt[highest_priority];
+                    wt[highest_priority] = time - at[highest_priority] - bt[highest_priority];
+                    tat[highest_priority] = wt[highest_priority] + bt[highest_priority];
+                    executed[highest_priority] = 1;
+                    completed++;
+                } else {
+                    time++;
+                }
+            }
+        }
+    } else if (choice == 3) {
+        // Round Robin
+        printf("Enter Time Quantum: ");
+        scanf("%d", &quantum);
+
+        time = 0;
+        completed = 0;
+        while (completed != n) {
+            for (int i = 0; i < n; i++) {
+                if (remaining_bt[i] > 0 && at[i] <= time) {
+                    if (remaining_bt[i] > quantum) {
+                        time += quantum;
+                        remaining_bt[i] -= quantum;
+                    } else {
+                        time += remaining_bt[i];
+                        wt[i] = time - bt[i] - at[i];
+                        tat[i] = wt[i] + bt[i];
+                        remaining_bt[i] = 0;
+                        completed++;
+                    }
+                }
+            }
+        }
+    }
+
+    // Display Results
+    printf("\nProcess\tArrival Time\tBurst Time\tWaiting Time\tTurnaround Time\n");
+    int total_wt = 0, total_tat = 0;
+    for (int i = 0; i < n; i++) {
+        total_wt += wt[i];
+        total_tat += tat[i];
+        printf("%d\t%d\t\t%d\t\t%d\t\t%d\n", p[i], at[i], bt[i], wt[i], tat[i]);
+    }
+
+    printf("\nAverage Waiting Time: %.2f\n", (float)total_wt / n);
+    printf("Average Turnaround Time: %.2f\n", (float)total_tat / n);
+
+    return 0;
+}
+
+
+
+
+
+
+FCFS Scheduling (First-Come, First-Served)
+
+#include <stdio.h>
+
+int main() {
+    int n;
+    printf("Enter the number of processes: ");
+    scanf("%d", &n);
+
+    int at[n], bt[n], wt[n], tat[n], ct[n];
+    int total_wt = 0, total_tat = 0;
+
+    printf("Enter Arrival Time and Burst Time for each process:\n");
+    for (int i = 0; i < n; i++) {
+        printf("Process %d - Arrival Time: ", i + 1);
+        scanf("%d", &at[i]);
+        printf("Burst Time: ");
+        scanf("%d", &bt[i]);
+    }
+
+    // Sorting by Arrival Time (FCFS)
+    for (int i = 0; i < n - 1; i++) {
+        for (int j = i + 1; j < n; j++) {
+            if (at[i] > at[j]) {
+                int temp = at[i];
+                at[i] = at[j];
+                at[j] = temp;
+
+                temp = bt[i];
+                bt[i] = bt[j];
+                bt[j] = temp;
+            }
+        }
+    }
+
+    // Calculating Completion Time, Waiting Time, Turnaround Time
+    ct[0] = at[0] + bt[0];
+    wt[0] = 0;
+    tat[0] = bt[0];
+
+    for (int i = 1; i < n; i++) {
+        if (ct[i - 1] < at[i]) {
+            ct[i] = at[i] + bt[i];
+        } else {
+            ct[i] = ct[i - 1] + bt[i];
+        }
+        tat[i] = ct[i] - at[i];
+        wt[i] = tat[i] - bt[i];
+    }
+
+    // Display and Averages
+    printf("\nProcess\tArrival Time\tBurst Time\tWaiting Time\tTurnaround Time\n");
+    for (int i = 0; i < n; i++) {
+        total_wt += wt[i];
+        total_tat += tat[i];
+        printf("%d\t%d\t\t%d\t\t%d\t\t%d\n", i + 1, at[i], bt[i], wt[i], tat[i]);
+    }
+
+    printf("\nAverage Waiting Time: %.2f\n", (float)total_wt / n);
+    printf("Average Turnaround Time: %.2f\n", (float)total_tat / n);
+
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SJF Scheduling (Shortest Job First)
+#include <stdio.h>
+
+int main() {
+    int n;
+    printf("Enter the number of processes: ");
+    scanf("%d", &n);
+
+    int at[n], bt[n], wt[n], tat[n], completed[n], total_wt = 0, total_tat = 0;
+    int time = 0, completed_count = 0;
+
+    printf("Enter Arrival Time and Burst Time for each process:\n");
+    for (int i = 0; i < n; i++) {
+        printf("Process %d - Arrival Time: ", i + 1);
+        scanf("%d", &at[i]);
+        printf("Burst Time: ");
+        scanf("%d", &bt[i]);
+        completed[i] = 0; // Initialize all processes as incomplete
+    }
+
+    while (completed_count < n) {
+        int shortest_bt = -1;
+        for (int i = 0; i < n; i++) {
+            if (!completed[i] && at[i] <= time && 
+                (shortest_bt == -1 || bt[i] < bt[shortest_bt])) {
+                shortest_bt = i;
+            }
+        }
+
+        if (shortest_bt != -1) {
+            time += bt[shortest_bt];
+            wt[shortest_bt] = time - at[shortest_bt] - bt[shortest_bt];
+            tat[shortest_bt] = wt[shortest_bt] + bt[shortest_bt];
+            completed[shortest_bt] = 1;
+            completed_count++;
+        } else {
+            time++;
+        }
+    }
+
+    // Display and Averages
+    printf("\nProcess\tArrival Time\tBurst Time\tWaiting Time\tTurnaround Time\n");
+    for (int i = 0; i < n; i++) {
+        total_wt += wt[i];
+        total_tat += tat[i];
+        printf("%d\t%d\t\t%d\t\t%d\t\t%d\n", i + 1, at[i], bt[i], wt[i], tat[i]);
+    }
+
+    printf("\nAverage Waiting Time: %.2f\n", (float)total_wt / n);
+    printf("Average Turnaround Time: %.2f\n", (float)total_tat / n);
+
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Assignment 8: Inter-Process Communication (IPC)
+
+Producer-Consumer Problem using POSIX Shared Memory
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <semaphore.h>
+
+#define SIZE 5
+
+int buffer[SIZE];
+int count = 0;
+
+sem_t empty, full;
+pthread_mutex_t mutex;
+
+void *producer(void *arg) {
+    for (int i = 0; i < 10; i++) {
+        sem_wait(&empty);
+        pthread_mutex_lock(&mutex);
+        buffer[count++] = i; // Produce an item
+        printf("Produced: %d\n", i);
+        pthread_mutex_unlock(&mutex);
+        sem_post(&full);
+    }
+    return NULL;
+}
+
+void *consumer(void *arg) {
+    for (int i = 0; i < 10; i++) {
+        sem_wait(&full);
+        pthread_mutex_lock(&mutex);
+        int item = buffer[--count]; // Consume an item
+        printf("Consumed: %d\n", item);
+        pthread_mutex_unlock(&mutex);
+        sem_post(&empty);
+    }
+    return NULL;
+}
+
+int main() {
+    pthread_t prod, cons;
+    pthread_mutex_init(&mutex, NULL);
+    sem_init(&empty, 0, SIZE);
+    sem_init(&full, 0, 0);
+
+    pthread_create(&prod, NULL, producer, NULL);
+    pthread_create(&cons, NULL, consumer, NULL);
+
+    pthread_join(prod, NULL);
+    pthread_join(cons, NULL);
+
+    pthread_mutex_destroy(&mutex);
+    sem_destroy(&empty);
+    sem_destroy(&full);
+
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Memory Allocation Techniques
+
+
+best fit
+
+#include <stdio.h>
+#define MAX 100
+
+int main() {
+    int block[MAX], process[MAX], allocation[MAX], n, m;
+
+    printf("Enter number of blocks: ");
+    scanf("%d", &m);
+    printf("Enter sizes of blocks: ");
+    for (int i = 0; i < m; i++) scanf("%d", &block[i]);
+
+    printf("Enter number of processes: ");
+    scanf("%d", &n);
+    printf("Enter sizes of processes: ");
+    for (int i = 0; i < n; i++) scanf("%d", &process[i]);
+
+    for (int i = 0; i < n; i++) allocation[i] = -1;
+
+    for (int i = 0; i < n; i++) {
+        int best = -1;
+        for (int j = 0; j < m; j++) {
+            if (block[j] >= process[i]) {
+                if (best == -1 || block[j] < block[best]) best = j;
+            }
+        }
+        if (best != -1) {
+            allocation[i] = best;
+            block[best] -= process[i];
+        }
+    }
+
+    for (int i = 0; i < n; i++) {
+        printf("Process %d -> Block %d\n", i + 1, allocation[i] + 1);
+    }
+    return 0;
+}
+
+
+
+
+1. First Fit Memory Allocation
+The first available block that can accommodate a process is allocated.
+
+c
+Copy code
+#include <stdio.h>
+#define MAX 100
+
+int main() {
+    int block[MAX], process[MAX], allocation[MAX], n, m;
+
+    printf("Enter number of blocks: ");
+    scanf("%d", &m);
+    printf("Enter sizes of blocks: ");
+    for (int i = 0; i < m; i++) scanf("%d", &block[i]);
+
+    printf("Enter number of processes: ");
+    scanf("%d", &n);
+    printf("Enter sizes of processes: ");
+    for (int i = 0; i < n; i++) scanf("%d", &process[i]);
+
+    for (int i = 0; i < n; i++) allocation[i] = -1;
+
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            if (block[j] >= process[i]) {
+                allocation[i] = j;
+                block[j] -= process[i]; // Reduce block size
+                break; // Move to the next process
+            }
+        }
+    }
+
+    printf("\nProcess\tProcess Size\tBlock Allocated\n");
+    for (int i = 0; i < n; i++) {
+        printf("%d\t%d\t\t", i + 1, process[i]);
+        if (allocation[i] != -1)
+            printf("%d\n", allocation[i] + 1);
+        else
+            printf("Not Allocated\n");
+    }
+
+    return 0;
+}
+2. Worst Fit Memory Allocation
+The largest available block is allocated to the process.
+
+c
+Copy code
+#include <stdio.h>
+#define MAX 100
+
+int main() {
+    int block[MAX], process[MAX], allocation[MAX], n, m;
+
+    printf("Enter number of blocks: ");
+    scanf("%d", &m);
+    printf("Enter sizes of blocks: ");
+    for (int i = 0; i < m; i++) scanf("%d", &block[i]);
+
+    printf("Enter number of processes: ");
+    scanf("%d", &n);
+    printf("Enter sizes of processes: ");
+    for (int i = 0; i < n; i++) scanf("%d", &process[i]);
+
+    for (int i = 0; i < n; i++) allocation[i] = -1;
+
+    for (int i = 0; i < n; i++) {
+        int worst = -1;
+        for (int j = 0; j < m; j++) {
+            if (block[j] >= process[i]) {
+                if (worst == -1 || block[j] > block[worst]) worst = j;
+            }
+        }
+        if (worst != -1) {
+            allocation[i] = worst;
+            block[worst] -= process[i];
+        }
+    }
+
+    printf("\nProcess\tProcess Size\tBlock Allocated\n");
+    for (int i = 0; i < n; i++) {
+        printf("%d\t%d\t\t", i + 1, process[i]);
+        if (allocation[i] != -1)
+            printf("%d\n", allocation[i] + 1);
+        else
+            printf("Not Allocated\n");
+    }
+
+    return 0;
+}
+3. Next Fit Memory Allocation
+Starts searching from the block allocated to the last process (or the last checked block).
+
+c
+Copy code
+#include <stdio.h>
+#define MAX 100
+
+int main() {
+    int block[MAX], process[MAX], allocation[MAX], n, m, lastAllocated = 0;
+
+    printf("Enter number of blocks: ");
+    scanf("%d", &m);
+    printf("Enter sizes of blocks: ");
+    for (int i = 0; i < m; i++) scanf("%d", &block[i]);
+
+    printf("Enter number of processes: ");
+    scanf("%d", &n);
+    printf("Enter sizes of processes: ");
+    for (int i = 0; i < n; i++) scanf("%d", &process[i]);
+
+    for (int i = 0; i < n; i++) allocation[i] = -1;
+
+    for (int i = 0; i < n; i++) {
+        int j = lastAllocated;
+        do {
+            if (block[j] >= process[i]) {
+                allocation[i] = j;
+                block[j] -= process[i];
+                lastAllocated = (j + 1) % m; // Move to the next block for the next process
+                break;
+            }
+            j = (j + 1) % m; // Move to the next block circularly
+        } while (j != lastAllocated);
+    }
+
+    printf("\nProcess\tProcess Size\tBlock Allocated\n");
+    for (int i = 0; i < n; i++) {
+        printf("%d\t%d\t\t", i + 1, process[i]);
+        if (allocation[i] != -1)
+            printf("%d\n", allocation[i] + 1);
+        else
+            printf("Not Allocated\n");
+    }
+
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
