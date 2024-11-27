@@ -276,6 +276,31 @@ end
 x 
  
 
+power 
+
+clc ; clear all;
+n = input("Enter the order of this matrix");
+A = [ 2 1 3; 0 -5 2 ; 0 0 -1];
+x0 = [1;1;1];
+tol =0.0001;
+
+y=A*x0;
+
+[mv,indx] = max(abs(y));
+ev = y(indx) ; err = 1; x0 = (1/ev)*y;
+
+while err > tol 
+    y = A*x0;
+    [mv,indx] = max(abs(y));
+    ev_new = y(indx);
+    x0 = (1/ev_new)*y;
+    err = abs(ev_new-ev);
+    ev = ev_new;
+end
+ev_new
+y
+
+
 
 
 
