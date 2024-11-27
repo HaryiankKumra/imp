@@ -301,7 +301,31 @@ ev_new
 y
 
 
+newton raphson 
 
+clc; clear all;
+ f = @(x,y) x*x - y*y + 2*x*y + 3;
+ fx = @(x,y) 2*x + 2*y;
+ fy = @(x,y) -2*y+2*x;
+ g = @(x,y) x*x*x - 3*x*y + 1;
+ gx = @(x,y) 3*x*x - 3;
+ gy = @(x,y) -3*x;
+
+
+ tol =input("Enter the tolerance: ");
+ err = 1;
+
+ % initial guess
+ x0 = [1;1];
+
+ while(err>tol)
+     jcn = [fx(x0(1),x0(2)) , fy(x0(1),x0(2)) ; gx(x0(1),x0(2)) , gy(x0(1),x0(2))];
+     xnew = x0 - inv(jcn) * [f(x0(1),x0(2));g(x0(1),x0(2))];
+     err = max(abs(xnew-x0));
+     x0 = xnew;
+ end
+
+ xnew;
 
 
 
