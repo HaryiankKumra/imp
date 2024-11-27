@@ -1,0 +1,103 @@
+#include <stdio.h>
+#include <stdbool.h>
+
+int main() {
+    int n, quantum, time = 0, cst;
+    printf("Enter the number of processes: ");
+    scanf("%d", &n);
+
+    int bt[n], at[n], wt[n], tat[n], p[n], remaining_bt[n];
+    int completed = 0;
+
+    // Gantt Chart arrays
+    int gantt_process[100];  // Stores the process IDs executed
+    int gantt_time[100];     // Stores the corresponding times
+    int gantt_index = 0;
+
+    // Taking inputs
+    printf("Enter Arrival Time and Burst Time for each process:\n");
+    for (int i = 0; i < n; i++) {
+        printf("Process %d - Arrival Time: ", i + 1);
+        scanf("%d", &at[i]);
+        printf("Burst Time: ");
+        scanf("%d", &bt[i]);
+        remaining_bt[i] = bt[i];
+        p[i] = i + 1; // Process ID
+    }
+
+    printf("Enter Time Quantum: ");
+    scanf("%d", &quantum);
+
+    printf("Enter Context Switch Time (CST): ");
+    scanf("%d", &cst);
+
+    // Start Round Robin Scheduling
+    time = 0;
+    completed = 0;
+    while (completed != n) {
+        bool process_executed = false; // To track idle time
+        for (int i = 0; i < n; i++) {
+            if (remaining_bt[i] > 0 && at[i] <= time) {
+                process_executed = true;
+
+                // Log process in Gantt Chart
+                gantt_process[gantt_index] = p[i];
+                gantt_time[gantt_index++] = time;
+
+                // Execute the process
+                if (remaining_bt[i] > quantum) {
+                    time += quantum;
+                    remaining_bt[i] -= quantum;
+                } else {
+                    time += remaining_bt[i];
+                    wt[i] = time - bt[i] - at[i];
+                    tat[i] = wt[i] + bt[i];
+                    remaining_bt[i] = 0;
+                    completed++;
+                }
+
+                // Add Context Switch Time after each execution
+                if (completed != n) { // Don't add CST after the last process
+                    time += cst;
+                }
+            }
+        }
+
+        // If no process was executed, increment time (idle period)
+        if (!process_executed) {
+            gantt_time[gantt_index] = time;
+            gantt_process[gantt_index++] = -1; // Denotes idle
+            time++;
+        }
+    }
+    gantt_time[gantt_index] = time; // Log the final time
+
+    // Display Results
+    printf("\nProcess\tArrival Time\tBurst Time\tWaiting Time\tTurnaround Time\n");
+    int total_wt = 0, total_tat = 0;
+    for (int i = 0; i < n; i++) {
+        total_wt += wt[i];
+        total_tat += tat[i];
+        printf("%d\t%d\t\t%d\t\t%d\t\t%d\n", p[i], at[i], bt[i], wt[i], tat[i]);
+    }
+
+    printf("\nAverage Waiting Time: %.2f\n", (float)total_wt / n);
+    printf("Average Turnaround Time: %.2f\n", (float)total_tat / n);
+
+    // Display Gantt Chart
+    printf("\nGantt Chart:\n|");
+    for (int i = 0; i < gantt_index; i++) {
+        if (gantt_process[i] == -1) {
+            printf(" Idle |");
+        } else {
+            printf(" P%d |", gantt_process[i]);
+        }
+    }
+    printf("\n0");
+    for (int i = 0; i <= gantt_index; i++) {
+        printf("    %d", gantt_time[i]);
+    }
+    printf("\n");
+
+    return 0;
+}
