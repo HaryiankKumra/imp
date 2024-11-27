@@ -328,5 +328,16 @@ clc; clear all;
  xnew;
 
 
+least sq
+clc; 
+clear all;
+n = input("Enter number of data points: ");
+x = [-2 ; -1 ; 0 ; 2 ; 3];
+y = [13 ; 8 ; 3 ; -7 ; -12];
+xx = (x')*x;
+xy = (x')*y;
+A=[n sum(x) ; sum(x) sum(xx)];
+B = [sum(y) ; sum(xy)];
+C = inv(A)*B
 
 
